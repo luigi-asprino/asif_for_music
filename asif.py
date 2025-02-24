@@ -63,28 +63,6 @@ class ASIF:
     
     def most_similar_candidate_vs_space2(self, relative_embeddings):
         return (1 / (1 + torch.cdist(relative_embeddings, self.candidate_embeddings2_rc))).argmax()
-    
-def compute_embedding(tokenizer, model, input, device="cuda", mode="ls"):
-    tokenized = tokenizer(input, return_tensors="pt", padding=True)
-    tokenized = tokenized.to(device)
-    model_output = model(**tokenized, output_hidden_states=True)
-    
-    embedding = model_output.last_hidden_state[:, 0, :]
-    embedding = embedding.to("cpu")
-
-    hidden_states = []
-    for n_input in range(len(input)):
-        input_hd = []
-        for n_layer in range(len(model_output.hidden_states)):
-            input_hd.append(model_output.hidden_states[n_layer][n_input: n_input+1, :, :])
-        hidden_states.append(torch.mean(torch.vstack(input_hd), dim=(0,1)))
-    hidden_states = torch.vstack(hidden_states)
-    embedding_hs = hidden_states.to("cpu")
-
-    if mode == "ls":
-        return embedding
-
-    return embedding, embedding_hs
 
 def extract_candidate_sets_from_clusters(kmeans, items):
     candidates_text = {cluster_id : set() for cluster_id in range(kmeans.cluster_centers_.shape[0])}

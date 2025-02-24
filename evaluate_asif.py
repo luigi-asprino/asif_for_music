@@ -9,9 +9,11 @@ from matplotlib import pyplot as plt
 from datasets import Dataset, load_dataset
 from torch.utils.data import DataLoader
 
-
 embedding_mode = "hs"
+n_of_clusters_lyrics = 16
+n_of_clusters_chords = 32
 
+print("Loading data")
 train_lyrics = pickle.load(open("experimental_data/train_lyrics.pkl", "rb"))
 train_chords = pickle.load(open("experimental_data/train_chords.pkl", "rb"))
 
@@ -25,11 +27,13 @@ test_lyrics_embeddings = pickle.load(open(f"experimental_data/test_lyrics_embedd
 test_chords_embeddings = pickle.load(open(f"experimental_data/test_chords_embeddings_{embedding_mode}.pkl", "rb"))
 
 # choose k = 8 for lyrics
-kmeans_lyrics = sklearn.cluster.MiniBatchKMeans(n_clusters=8)
+print("Compute clusters for lyrics")
+kmeans_lyrics = sklearn.cluster.MiniBatchKMeans(n_clusters=n_of_clusters_lyrics).fit(train_lyrics_embeddings.numpy())
 pickle.dump(kmeans_lyrics, open(f"experimental_data/kmeans_lyrics_{embedding_mode}.pkl", "wb"))
 
 # choose k = 16 for chords
-kmeans_chords = sklearn.cluster.MiniBatchKMeans(n_clusters=16)
+print("Compute clusters for chords")
+kmeans_chords = sklearn.cluster.MiniBatchKMeans(n_clusters=n_of_clusters_chords).fit(train_chords_embeddings.numpy())
 pickle.dump(kmeans_chords, open(f"experimental_data/kmeans_chords_{embedding_mode}.pkl", "wb"))
 
 lyrics_candidates = extract_candidate_sets_from_clusters(kmeans_lyrics, train_lyrics)
@@ -49,7 +53,6 @@ predictions = []
 
 for i in tqdm(range(0, len(test_lyrics_embeddings), chunk_size)):
     test_relative_coordinates_lyrics = asif.compute_relative_coordinates_vs_space1(test_lyrics_embeddings[i:i+chunk_size])
-    test_relative_coordinates_lyrics = test_relative_coordinates_lyrics.to
     pred_chunk = (1 / (1 + torch.cdist(test_relative_coordinates_lyrics, asif.candidate_embeddings2_rc))).argmax(dim=1)
     predictions.extend(pred_chunk)
 
