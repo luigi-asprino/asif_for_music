@@ -4,9 +4,7 @@ from mido import Message, MidiFile, MidiTrack
 from harte.harte import Harte
 from datasets import load_dataset
 from flask import Flask, request, send_file
-from text2chords import get_best_chord_sequence_candidate, get_best_lyrics_candidate
-
-
+from text2chords_no_cluster import get_best_chord_sequence_candidate, get_best_lyrics_candidate
 
 def create_midi_from_chords(chords, output_file, tempo=500):
     """
@@ -69,8 +67,12 @@ def get_chord_sequences():
 
     if not data or 'lyrics' not in data:
         return {"error": "Missing 'lyrics' in request body."}, 400
+    
+    threshold = 0
+    if 'threshold' in data:
+        threshold = int(data['threshold'])
 
-    return get_best_chord_sequence_candidate([data['lyrics']])
+    return get_best_chord_sequence_candidate([data['lyrics']], threshold=threshold)
 
 
 @app.route('/get_lyrics', methods=['POST'])
@@ -79,7 +81,11 @@ def get_lyrics():
 
     if not data or 'chords' not in data:
         return {"error": "Missing 'chords' in request body."}, 400
+    
+    threshold = 0
+    if 'threshold' in data:
+        threshold = int(data['threshold'])
 
-    return get_best_lyrics_candidate([data['chords']])
+    return get_best_lyrics_candidate([data['chords']], threshold=threshold)
 
 app.run(port=int(sys.argv[1]))
