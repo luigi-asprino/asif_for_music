@@ -46,15 +46,17 @@ def pack_results(candidates_ids, group_by_chord_progression=False):
 def get_best_chord_sequence_candidate(lyrics, threshold=0):
     text_embedding = torch.from_numpy(model.encode(lyrics))
     lyrics_dist = torch.cdist(text_embedding, lyrics_embeddings)
-    min_dist = torch.unique(lyrics_dist.sort().values)[threshold]
+    thresholds = torch.unique(lyrics_dist.sort().values)
+    min_dist = thresholds[min(threshold, len(thresholds-1))]
     indexes = (lyrics_dist <= min_dist).nonzero(as_tuple=True)[1]
     return pack_results(indexes, group_by_chord_progression=True)
 
 def get_best_lyrics_candidate(chord_sequence, threshold=0):
     chords_embedding = torch.from_numpy(chord_encoder.encode(chord_sequence))
     chords_dist = torch.cdist(chords_embedding, chords_embeddings)
-    min_dist = torch.unique(chords_dist.sort().values)[threshold]
-    candidates_ids = (chords_dist == min_dist).nonzero(as_tuple=True)[1]
+    thresholds = torch.unique(chords_dist.sort().values)
+    min_dist = thresholds[min(threshold, len(thresholds-1))]
+    candidates_ids = (chords_dist <= min_dist).nonzero(as_tuple=True)[1]
     return pack_results(candidates_ids)
 
 #print(get_best_chord_sequence_candidate(sys.argv))
